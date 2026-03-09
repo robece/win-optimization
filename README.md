@@ -9,15 +9,27 @@ Targets environments using **Office 365** and **Microsoft Teams**.
 
 | Script | Description |
 |---|---|
-| `Optimize-W11DevVM.ps1` | Removes bloatware, disables services, applies CPU/RAM tweaks |
+| `Optimize-W11DevVM.ps1` | v1 — Removes bloatware, disables services, applies CPU/RAM tweaks |
+| `Optimize-W11DevVM-v2.ps1` | v2 — All v1 optimizations + network, NTFS, fluidity, scheduled tasks |
 | `Restore-W11DevVM.ps1` | Re-enables services and reverts registry/CPU changes |
+| `INSTRUCTIONS.md` | Step-by-step guide for running v1 |
+| `INSTRUCTIONS-v2.md` | Step-by-step guide for running v2 |
+
+> **Recommendation:** Run `Optimize-W11DevVM-v2.ps1` — it is a standalone script
+> that includes everything from v1 plus all v2 optimizations. You do not need to run v1 first.
 
 ## Usage
 
 Run **as Administrator** in PowerShell:
 
 ```powershell
-# Optimize
+# Allow execution for this session
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+
+# Run v2 (recommended — includes everything)
+.\Optimize-W11DevVM-v2.ps1
+
+# Run v1 only
 .\Optimize-W11DevVM.ps1
 
 # Revert (services + registry only — apps must be reinstalled manually)
@@ -214,6 +226,50 @@ Run **as Administrator** in PowerShell:
 | `HKLM:\..\Windows Search\AllowCortana` | `0` | Disables Cortana |
 | `HKLM:\..\DataCollection\AllowTelemetry` | `0` | Disables telemetry |
 | `HKCU:\..\AdvertisingInfo\Enabled` | `0` | Disables advertising ID |
+
+---
+
+## v2 — Additional optimizations
+
+### RAM
+| Optimization | Detail |
+|---|---|
+| Timeline / Activity History | Disabled via policy registry keys |
+
+### CPU
+| Optimization | Detail |
+|---|---|
+| Telemetry scheduled tasks | 18 background tasks disabled (diagnostics, CEIP, error reporting, maps, etc.) |
+| Core Parking | Disabled — all CPU cores stay active, eliminates micro-stutters in VMs |
+| Fast Startup | Disabled — prevents hybrid boot state that causes I/O and CPU overhead |
+| Automatic Maintenance | Disabled — stops background defrag, indexing, and diagnostics |
+
+### Window Fluidity
+| Optimization | Detail |
+|---|---|
+| Transparency (Acrylic/Mica) | Disabled — removes constant GPU/CPU blur rendering |
+| Snap Assist | Disabled — removes overlay animations when moving windows |
+| Window shadows | Disabled — reduces DWM rendering overhead |
+| HAGS | Enabled — Hardware-Accelerated GPU Scheduling reduces frame latency |
+| DWM priority | Increased — Desktop Window Manager gets higher scheduling priority |
+
+### Network
+| Optimization | Detail |
+|---|---|
+| TCP Auto-Tuning | Disabled — reduces overhead on VM virtual adapters |
+| IPv6 | Disabled on all adapters — removes unused network stack overhead |
+| QoS bandwidth reservation | Set to 0% — removes the default 20% bandwidth reservation |
+
+### NTFS / Disk
+| Optimization | Detail |
+|---|---|
+| Last Access Time | Disabled — eliminates write on every file read |
+| 8.3 filename generation | Disabled — removes legacy short filename creation overhead |
+
+### Startup
+| Optimization | Detail |
+|---|---|
+| Startup app delay | Removed — eliminates the 10-second artificial delay Windows adds at boot |
 
 ---
 
