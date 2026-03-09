@@ -167,7 +167,7 @@ $servicesToDisable = @(
     @{ Name = "WSearch";                Reason = "Windows Search indexing (high background CPU/IO)" }
 
     # ── Superfetch / SysMain ──────────────────────
-    @{ Name = "SysMain";                Reason = "Superfetch — prefetches apps using CPU cycles" }
+    @{ Name = "SysMain";                Reason = "Superfetch - prefetches apps using CPU cycles" }
 
     # ── Consumer / retail / gaming features ──────
     @{ Name = "XblAuthManager";         Reason = "Xbox Live Auth" }
@@ -266,7 +266,7 @@ foreach ($svc in $servicesToDisable) {
     }
 
     Set-Service -Name $svc.Name -StartupType Disabled
-    Write-Host "  [DISABLED] $($svc.Name) — $($svc.Reason)" -ForegroundColor Green
+    Write-Host "  [DISABLED] $($svc.Name) - $($svc.Reason)" -ForegroundColor Green
     $disabled++
 }
 

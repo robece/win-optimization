@@ -17,7 +17,7 @@ $ErrorActionPreference = "SilentlyContinue"
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "  W11 Dev VM — Restore Default Settings" -ForegroundColor Cyan
+Write-Host "  W11 Dev VM - Restore Default Settings" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -27,9 +27,9 @@ Write-Host ""
 # ─────────────────────────────────────────────
 
 # StartupType reference:
-#   Automatic         — starts at boot
-#   Manual            — starts on demand
-#   Disabled          — never starts
+#   Automatic         - starts at boot
+#   Manual            - starts on demand
+#   Disabled          - never starts
 
 $servicesToRestore = @(
 
