@@ -1,32 +1,109 @@
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    Windows 11 VM optimization script v2 — corporate development environments.
-    Includes all v1 optimizations plus:
-    - Timeline / Activity History disabled
-    - Telemetry scheduled tasks cleaned
-    - CPU Core Parking disabled
-    - Fast Startup disabled
-    - Automatic Maintenance disabled
-    - Window transparency disabled
-    - Snap Assist disabled
-    - Window shadows disabled
-    - Hardware-Accelerated GPU Scheduling (HAGS) enabled
-    - DWM process priority increased
-    - Network Auto-Tuning disabled
-    - IPv6 disabled
-    - QoS 20% bandwidth reservation removed
-    - NTFS Last Access Time disabled
-    - NTFS 8.3 filenames disabled
-    - Startup app delay removed
+    Windows 11 VM optimization script v2 - corporate development environments.
+    Generates a full-color HTML log at the end of execution.
 
 .NOTES
     Run as Administrator. Creates a restore point before making changes.
-    To revert changes run: Restore-W11DevVM-v2.ps1
+    To revert changes run: Restore-W11DevVM.ps1
 #>
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "SilentlyContinue"
+
+# ─────────────────────────────────────────────
+# HTML LOG ENGINE
+# ─────────────────────────────────────────────
+$script:htmlLines = [System.Collections.Generic.List[string]]::new()
+$script:logPath   = "$PSScriptRoot\optimize-v2-log.html"
+
+$colorMap = @{
+    Cyan        = "#4ec9e0"
+    Yellow      = "#dcdcaa"
+    Green       = "#4ec94e"
+    Red         = "#f44747"
+    DarkGray    = "#666666"
+    DarkYellow  = "#c8a000"
+    White       = "#d4d4d4"
+    Gray        = "#9d9d9d"
+    Default     = "#d4d4d4"
+}
+
+function Write-Log {
+    param(
+        [string]$Message = "",
+        [string]$ForegroundColor = "Default"
+    )
+
+    # Console output
+    if ($ForegroundColor -ne "Default" -and $ForegroundColor -ne "") {
+        Write-Host $Message -ForegroundColor $ForegroundColor
+    } else {
+        Write-Host $Message
+    }
+
+    # HTML output
+    $css   = if ($colorMap.ContainsKey($ForegroundColor)) { $colorMap[$ForegroundColor] } else { $colorMap["Default"] }
+    $safe  = $Message -replace "&","&amp;" -replace "<","&lt;" -replace ">","&gt;"
+    $safe  = if ($safe -eq "") { "&nbsp;" } else { $safe }
+    $script:htmlLines.Add("<div><span style='color:$css'>$safe</span></div>")
+}
+
+function Save-HtmlLog {
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $hostname  = $env:COMPUTERNAME
+    $os        = (Get-CimInstance Win32_OperatingSystem).Caption
+
+    $header = @"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W11 VM Optimizer v2 - Log</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: #0c0c0c;
+            color: #d4d4d4;
+            font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            padding: 24px 32px;
+        }
+        .meta {
+            color: #555;
+            font-size: 11px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #1e1e1e;
+            padding-bottom: 12px;
+        }
+        .meta span { color: #4ec9e0; }
+        .log { white-space: pre-wrap; }
+        div { min-height: 1.6em; }
+    </style>
+</head>
+<body>
+    <div class="meta">
+        Generated: <span>$timestamp</span> &nbsp;|&nbsp;
+        Host: <span>$hostname</span> &nbsp;|&nbsp;
+        OS: <span>$os</span>
+    </div>
+    <div class="log">
+"@
+
+    $footer = @"
+    </div>
+</body>
+</html>
+"@
+
+    $content = $header + ($script:htmlLines -join "`n") + $footer
+    [System.IO.File]::WriteAllText($script:logPath, $content, [System.Text.Encoding]::UTF8)
+    Write-Host ""
+    Write-Host "  HTML log saved to: $script:logPath" -ForegroundColor Cyan
+}
 
 # ─────────────────────────────────────────────
 # SNAPSHOT: RAM + CPU before
@@ -38,24 +115,24 @@ $usedBeforeMB = $totalMB - $freeBeforeMB
 $cpuBefore    = [math]::Round((Get-CimInstance -ClassName Win32_Processor |
                     Measure-Object -Property LoadPercentage -Average).Average, 1)
 
-Write-Host ""
-Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "  W11 Dev VM Optimizer v2  (RAM + CPU + Apps + Network + NTFS)" -ForegroundColor Cyan
-Write-Host "============================================" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "[BEFORE] Total RAM : $totalMB MB" -ForegroundColor Yellow
-Write-Host "[BEFORE] Used RAM  : $usedBeforeMB MB  |  Free: $freeBeforeMB MB" -ForegroundColor Yellow
-Write-Host "[BEFORE] CPU Load  : $cpuBefore %" -ForegroundColor Yellow
-Write-Host ""
+Write-Log ""
+Write-Log "============================================" Cyan
+Write-Log "  W11 Dev VM Optimizer v2  (RAM + CPU + Apps + Network + NTFS)" Cyan
+Write-Log "============================================" Cyan
+Write-Log ""
+Write-Log "[BEFORE] Total RAM : $totalMB MB" Yellow
+Write-Log "[BEFORE] Used RAM  : $usedBeforeMB MB  |  Free: $freeBeforeMB MB" Yellow
+Write-Log "[BEFORE] CPU Load  : $cpuBefore %" Yellow
+Write-Log ""
 
 # ─────────────────────────────────────────────
 # CREATE RESTORE POINT
 # ─────────────────────────────────────────────
-Write-Host "Creating system restore point..." -ForegroundColor Gray
+Write-Log "Creating system restore point..." Gray
 Enable-ComputerRestore -Drive "C:\" | Out-Null
 Checkpoint-Computer -Description "Before W11 VM Optimization v2" -RestorePointType "MODIFY_SETTINGS" | Out-Null
-Write-Host "Restore point created." -ForegroundColor Green
-Write-Host ""
+Write-Log "Restore point created." Green
+Write-Log ""
 
 # ─────────────────────────────────────────────
 # BLOATWARE APPS TO REMOVE
@@ -117,8 +194,8 @@ $appsToRemove = @(
     "Microsoft.HoloShell"
 )
 
-Write-Host "Removing bloatware apps..." -ForegroundColor Cyan
-Write-Host ""
+Write-Log "Removing bloatware apps..." Cyan
+Write-Log ""
 
 $appsRemoved  = 0
 $appsNotFound = 0
@@ -129,7 +206,7 @@ foreach ($app in $appsToRemove) {
                    Where-Object { $_.DisplayName -eq $app }
 
     if ($null -eq $pkg -and $null -eq $provisioned) {
-        Write-Host "  [NOT FOUND]  $app" -ForegroundColor DarkGray
+        Write-Log "  [NOT FOUND]  $app" DarkGray
         $appsNotFound++
         continue
     }
@@ -142,7 +219,7 @@ foreach ($app in $appsToRemove) {
             -ErrorAction SilentlyContinue | Out-Null
     }
 
-    Write-Host "  [REMOVED]    $app" -ForegroundColor Green
+    Write-Log "  [REMOVED]    $app" Green
     $appsRemoved++
 }
 
@@ -207,19 +284,19 @@ $disabled = 0
 $skipped  = 0
 $notFound = 0
 
-Write-Host ""
-Write-Host "Disabling services..." -ForegroundColor Cyan
-Write-Host ""
+Write-Log ""
+Write-Log "Disabling services..." Cyan
+Write-Log ""
 
 foreach ($svc in $servicesToDisable) {
     $service = Get-Service -Name $svc.Name -ErrorAction SilentlyContinue
     if ($null -eq $service) {
-        Write-Host "  [NOT FOUND]        $($svc.Name)" -ForegroundColor DarkGray
+        Write-Log "  [NOT FOUND]        $($svc.Name)" DarkGray
         $notFound++
         continue
     }
     if ($service.StartType -eq "Disabled") {
-        Write-Host "  [ALREADY DISABLED] $($svc.Name)" -ForegroundColor DarkGray
+        Write-Log "  [ALREADY DISABLED] $($svc.Name)" DarkGray
         $skipped++
         continue
     }
@@ -227,15 +304,15 @@ foreach ($svc in $servicesToDisable) {
         Stop-Service -Name $svc.Name -Force -NoWait
     }
     Set-Service -Name $svc.Name -StartupType Disabled
-    Write-Host "  [DISABLED] $($svc.Name) - $($svc.Reason)" -ForegroundColor Green
+    Write-Log "  [DISABLED] $($svc.Name) - $($svc.Reason)" Green
     $disabled++
 }
 
 # ─────────────────────────────────────────────
-# REGISTRY TWEAKS (telemetry, Cortana, ads)
+# REGISTRY TWEAKS
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Applying registry tweaks..." -ForegroundColor Cyan
+Write-Log ""
+Write-Log "Applying registry tweaks..." Cyan
 
 $regTweaks = @(
     @{ Path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"
@@ -249,36 +326,34 @@ $regTweaks = @(
 foreach ($tweak in $regTweaks) {
     if (-not (Test-Path $tweak.Path)) { New-Item -Path $tweak.Path -Force | Out-Null }
     Set-ItemProperty -Path $tweak.Path -Name $tweak.Name -Value $tweak.Value -Type $tweak.Type
-    Write-Host "  [REG] $($tweak.Reason)" -ForegroundColor Green
+    Write-Log "  [REG] $($tweak.Reason)" Green
 }
 
 # ─────────────────────────────────────────────
 # CPU OPTIMIZATIONS (v1)
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Applying CPU optimizations..." -ForegroundColor Cyan
+Write-Log ""
+Write-Log "Applying CPU optimizations..." Cyan
 
-# Power plan: High Performance
 $hpGuid = (powercfg /list | Select-String "High performance" | ForEach-Object {
     if ($_ -match "\(([0-9a-f-]{36})\)") { $Matches[1] }
 })
 if ($hpGuid) {
     powercfg /setactive $hpGuid | Out-Null
-    Write-Host "  [POWER] High Performance plan activated" -ForegroundColor Green
+    Write-Log "  [POWER] High Performance plan activated" Green
 } else {
     powercfg /duplicatescheme 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c | Out-Null
     $hpGuid = (powercfg /list | Select-String "High performance" | ForEach-Object {
         if ($_ -match "\(([0-9a-f-]{36})\)") { $Matches[1] }
     })
     if ($hpGuid) { powercfg /setactive $hpGuid | Out-Null }
-    Write-Host "  [POWER] High Performance plan created and activated" -ForegroundColor Green
+    Write-Log "  [POWER] High Performance plan created and activated" Green
 }
 
-# Visual effects
 $visualFxPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects"
 if (-not (Test-Path $visualFxPath)) { New-Item -Path $visualFxPath -Force | Out-Null }
 Set-ItemProperty -Path $visualFxPath -Name "VisualFXSetting" -Value 2 -Type DWord
-Write-Host "  [VISUAL] Visual effects set to best performance" -ForegroundColor Green
+Write-Log "  [VISUAL] Visual effects set to best performance" Green
 
 $animKeys = @(
     @{ Path = "HKCU:\Control Panel\Desktop"
@@ -300,13 +375,11 @@ foreach ($key in $animKeys) {
     Set-ItemProperty -Path $key.Path -Name $key.Name -Value $key.Value -Type $key.Type
 }
 
-# Background UWP apps
 $bgAppsPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications"
 if (-not (Test-Path $bgAppsPath)) { New-Item -Path $bgAppsPath -Force | Out-Null }
 Set-ItemProperty -Path $bgAppsPath -Name "GlobalUserDisabled" -Value 1 -Type DWord
-Write-Host "  [BKGD] Background UWP apps disabled" -ForegroundColor Green
+Write-Log "  [BKGD] Background UWP apps disabled" Green
 
-# Game Bar / DVR
 $gameBarKeys = @(
     @{ Path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR"
        Name = "AppCaptureEnabled"; Value = 0; Type = "DWord" }
@@ -319,246 +392,224 @@ foreach ($key in $gameBarKeys) {
     if (-not (Test-Path $key.Path)) { New-Item -Path $key.Path -Force | Out-Null }
     Set-ItemProperty -Path $key.Path -Name $key.Name -Value $key.Value -Type $key.Type
 }
-Write-Host "  [GAME] Game Bar and Game DVR disabled" -ForegroundColor Green
+Write-Log "  [GAME] Game Bar and Game DVR disabled" Green
 
-# Taskbar Widgets
 $widgetPath = "HKLM:\SOFTWARE\Policies\Microsoft\Dsh"
 if (-not (Test-Path $widgetPath)) { New-Item -Path $widgetPath -Force | Out-Null }
 Set-ItemProperty -Path $widgetPath -Name "AllowNewsAndInterests" -Value 0 -Type DWord
-Write-Host "  [WIDGET] Taskbar Widgets disabled" -ForegroundColor Green
+Write-Log "  [WIDGET] Taskbar Widgets disabled" Green
 
-# Processor scheduling: Background Services
 Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" `
     -Name "Win32PrioritySeparation" -Value 24 -Type DWord
-Write-Host "  [SCHED] Processor scheduling set to Background Services" -ForegroundColor Green
+Write-Log "  [SCHED] Processor scheduling set to Background Services" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: TIMELINE / ACTIVITY HISTORY
+# v2: TIMELINE / ACTIVITY HISTORY
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Disabling Timeline and Activity History..." -ForegroundColor Cyan
+Write-Log ""
+Write-Log "Disabling Timeline and Activity History..." Cyan
 
 $timelinePath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System"
 if (-not (Test-Path $timelinePath)) { New-Item -Path $timelinePath -Force | Out-Null }
 Set-ItemProperty -Path $timelinePath -Name "EnableActivityFeed"    -Value 0 -Type DWord
 Set-ItemProperty -Path $timelinePath -Name "PublishUserActivities" -Value 0 -Type DWord
 Set-ItemProperty -Path $timelinePath -Name "UploadUserActivities"  -Value 0 -Type DWord
-Write-Host "  [DONE] Timeline and Activity History disabled" -ForegroundColor Green
+Write-Log "  [DONE] Timeline and Activity History disabled" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: TELEMETRY SCHEDULED TASKS
+# v2: TELEMETRY SCHEDULED TASKS
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Disabling telemetry scheduled tasks..." -ForegroundColor Cyan
+Write-Log ""
+Write-Log "Disabling telemetry scheduled tasks..." Cyan
 
 $scheduledTasks = @(
-    @{ Path = "\Microsoft\Windows\Application Experience\"; Name = "Microsoft Compatibility Appraiser" }
-    @{ Path = "\Microsoft\Windows\Application Experience\"; Name = "ProgramDataUpdater" }
-    @{ Path = "\Microsoft\Windows\Application Experience\"; Name = "StartupAppTask" }
+    @{ Path = "\Microsoft\Windows\Application Experience\";                Name = "Microsoft Compatibility Appraiser" }
+    @{ Path = "\Microsoft\Windows\Application Experience\";                Name = "ProgramDataUpdater" }
+    @{ Path = "\Microsoft\Windows\Application Experience\";                Name = "StartupAppTask" }
     @{ Path = "\Microsoft\Windows\Customer Experience Improvement Program\"; Name = "Consolidator" }
     @{ Path = "\Microsoft\Windows\Customer Experience Improvement Program\"; Name = "UsbCeip" }
-    @{ Path = "\Microsoft\Windows\DiskDiagnostic\"; Name = "Microsoft-Windows-DiskDiagnosticDataCollector" }
-    @{ Path = "\Microsoft\Windows\Feedback\Siuf\"; Name = "DmClient" }
-    @{ Path = "\Microsoft\Windows\Feedback\Siuf\"; Name = "DmClientOnScenarioDownload" }
-    @{ Path = "\Microsoft\Windows\Windows Error Reporting\"; Name = "QueueReporting" }
-    @{ Path = "\Microsoft\Windows\Autochk\"; Name = "Proxy" }
-    @{ Path = "\Microsoft\Windows\CloudExperienceHost\"; Name = "CreateObjectTask" }
-    @{ Path = "\Microsoft\Windows\DiskFootprint\"; Name = "Diagnostics" }
-    @{ Path = "\Microsoft\Windows\Maps\"; Name = "MapsToastTask" }
-    @{ Path = "\Microsoft\Windows\Maps\"; Name = "MapsUpdateTask" }
-    @{ Path = "\Microsoft\Windows\NetTrace\"; Name = "GatherNetworkInfo" }
-    @{ Path = "\Microsoft\Windows\WDI\"; Name = "ResolutionHost" }
-    @{ Path = "\Microsoft\Windows\Power Efficiency Diagnostics\"; Name = "AnalyzeSystem" }
-    @{ Path = "\Microsoft\Windows\Maintenance\"; Name = "WinSAT" }
+    @{ Path = "\Microsoft\Windows\DiskDiagnostic\";                        Name = "Microsoft-Windows-DiskDiagnosticDataCollector" }
+    @{ Path = "\Microsoft\Windows\Feedback\Siuf\";                         Name = "DmClient" }
+    @{ Path = "\Microsoft\Windows\Feedback\Siuf\";                         Name = "DmClientOnScenarioDownload" }
+    @{ Path = "\Microsoft\Windows\Windows Error Reporting\";               Name = "QueueReporting" }
+    @{ Path = "\Microsoft\Windows\Autochk\";                               Name = "Proxy" }
+    @{ Path = "\Microsoft\Windows\CloudExperienceHost\";                   Name = "CreateObjectTask" }
+    @{ Path = "\Microsoft\Windows\DiskFootprint\";                         Name = "Diagnostics" }
+    @{ Path = "\Microsoft\Windows\Maps\";                                  Name = "MapsToastTask" }
+    @{ Path = "\Microsoft\Windows\Maps\";                                  Name = "MapsUpdateTask" }
+    @{ Path = "\Microsoft\Windows\NetTrace\";                              Name = "GatherNetworkInfo" }
+    @{ Path = "\Microsoft\Windows\WDI\";                                   Name = "ResolutionHost" }
+    @{ Path = "\Microsoft\Windows\Power Efficiency Diagnostics\";          Name = "AnalyzeSystem" }
+    @{ Path = "\Microsoft\Windows\Maintenance\";                           Name = "WinSAT" }
 )
 
-$tasksDisabled  = 0
-$tasksNotFound  = 0
+$tasksDisabled = 0
+$tasksNotFound = 0
 
 foreach ($task in $scheduledTasks) {
     $t = Get-ScheduledTask -TaskPath $task.Path -TaskName $task.Name -ErrorAction SilentlyContinue
     if ($null -eq $t) {
-        Write-Host "  [NOT FOUND] $($task.Name)" -ForegroundColor DarkGray
+        Write-Log "  [NOT FOUND] $($task.Name)" DarkGray
         $tasksNotFound++
         continue
     }
     Disable-ScheduledTask -TaskPath $task.Path -TaskName $task.Name -ErrorAction SilentlyContinue | Out-Null
-    Write-Host "  [DISABLED]  $($task.Name)" -ForegroundColor Green
+    Write-Log "  [DISABLED]  $($task.Name)" Green
     $tasksDisabled++
 }
 
 # ─────────────────────────────────────────────
-# NEW v2: CORE PARKING
+# v2: CORE PARKING
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Disabling CPU Core Parking..." -ForegroundColor Cyan
-
-# Subgroup: Processor Power Management  54533251-82be-4824-96c1-47b60b740d00
-# Setting:  Minimum processor state       893dee8e-2bef-41e0-89c6-b55d0929964c
-# Setting:  Core Parking min cores        0cc5b647-c1df-4637-891a-dec35c318583
+Write-Log ""
+Write-Log "Disabling CPU Core Parking..." Cyan
 powercfg /setacvalueindex SCHEME_CURRENT 54533251-82be-4824-96c1-47b60b740d00 0cc5b647-c1df-4637-891a-dec35c318583 100 | Out-Null
 powercfg /setdcvalueindex SCHEME_CURRENT 54533251-82be-4824-96c1-47b60b740d00 0cc5b647-c1df-4637-891a-dec35c318583 100 | Out-Null
 powercfg /setactive SCHEME_CURRENT | Out-Null
-Write-Host "  [DONE] Core Parking disabled (all cores always active)" -ForegroundColor Green
+Write-Log "  [DONE] Core Parking disabled (all cores always active)" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: FAST STARTUP
+# v2: FAST STARTUP
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Disabling Fast Startup..." -ForegroundColor Cyan
-
+Write-Log ""
+Write-Log "Disabling Fast Startup..." Cyan
 $fastStartupPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power"
 if (-not (Test-Path $fastStartupPath)) { New-Item -Path $fastStartupPath -Force | Out-Null }
 Set-ItemProperty -Path $fastStartupPath -Name "HiberbootEnabled" -Value 0 -Type DWord
-Write-Host "  [DONE] Fast Startup disabled" -ForegroundColor Green
+Write-Log "  [DONE] Fast Startup disabled" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: AUTOMATIC MAINTENANCE
+# v2: AUTOMATIC MAINTENANCE
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Disabling Automatic Maintenance..." -ForegroundColor Cyan
-
+Write-Log ""
+Write-Log "Disabling Automatic Maintenance..." Cyan
 $maintPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance"
 if (-not (Test-Path $maintPath)) { New-Item -Path $maintPath -Force | Out-Null }
 Set-ItemProperty -Path $maintPath -Name "MaintenanceDisabled" -Value 1 -Type DWord
-
-Disable-ScheduledTask -TaskPath "\Microsoft\Windows\TaskScheduler\" -TaskName "Regular Maintenance"       -ErrorAction SilentlyContinue | Out-Null
-Disable-ScheduledTask -TaskPath "\Microsoft\Windows\TaskScheduler\" -TaskName "Maintenance Configurator"  -ErrorAction SilentlyContinue | Out-Null
-Write-Host "  [DONE] Automatic Maintenance disabled" -ForegroundColor Green
+Disable-ScheduledTask -TaskPath "\Microsoft\Windows\TaskScheduler\" -TaskName "Regular Maintenance"      -ErrorAction SilentlyContinue | Out-Null
+Disable-ScheduledTask -TaskPath "\Microsoft\Windows\TaskScheduler\" -TaskName "Maintenance Configurator" -ErrorAction SilentlyContinue | Out-Null
+Write-Log "  [DONE] Automatic Maintenance disabled" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: WINDOW TRANSPARENCY (Acrylic / Mica)
+# v2: WINDOW TRANSPARENCY
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Disabling window transparency effects..." -ForegroundColor Cyan
-
+Write-Log ""
+Write-Log "Disabling window transparency effects..." Cyan
 $themePath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
 if (-not (Test-Path $themePath)) { New-Item -Path $themePath -Force | Out-Null }
 Set-ItemProperty -Path $themePath -Name "EnableTransparency" -Value 0 -Type DWord
-Write-Host "  [DONE] Window transparency (Acrylic/Mica) disabled" -ForegroundColor Green
+Write-Log "  [DONE] Window transparency (Acrylic/Mica) disabled" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: SNAP ASSIST
+# v2: SNAP ASSIST
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Disabling Snap Assist..." -ForegroundColor Cyan
-
+Write-Log ""
+Write-Log "Disabling Snap Assist..." Cyan
 $explorerAdvPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
-Set-ItemProperty -Path $explorerAdvPath -Name "SnapAssist"    -Value 0 -Type DWord
-Set-ItemProperty -Path $explorerAdvPath -Name "EnableSnapBar" -Value 0 -Type DWord
-Set-ItemProperty -Path $explorerAdvPath -Name "EnableTaskGroups" -Value 0 -Type DWord
-Write-Host "  [DONE] Snap Assist disabled" -ForegroundColor Green
+Set-ItemProperty -Path $explorerAdvPath -Name "SnapAssist"      -Value 0 -Type DWord
+Set-ItemProperty -Path $explorerAdvPath -Name "EnableSnapBar"   -Value 0 -Type DWord
+Set-ItemProperty -Path $explorerAdvPath -Name "EnableTaskGroups"-Value 0 -Type DWord
+Write-Log "  [DONE] Snap Assist disabled" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: WINDOW SHADOWS
+# v2: WINDOW SHADOWS
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Disabling window shadows..." -ForegroundColor Cyan
-
+Write-Log ""
+Write-Log "Disabling window shadows..." Cyan
 Set-ItemProperty -Path $explorerAdvPath -Name "ListviewShadow" -Value 0 -Type DWord
-
 $dwmPath = "HKCU:\Software\Microsoft\Windows\DWM"
 if (-not (Test-Path $dwmPath)) { New-Item -Path $dwmPath -Force | Out-Null }
 Set-ItemProperty -Path $dwmPath -Name "EnableWindowColorization" -Value 0 -Type DWord
-Write-Host "  [DONE] Window shadows disabled" -ForegroundColor Green
+Write-Log "  [DONE] Window shadows disabled" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: HARDWARE-ACCELERATED GPU SCHEDULING (HAGS)
+# v2: HAGS
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Enabling Hardware-Accelerated GPU Scheduling (HAGS)..." -ForegroundColor Cyan
-
+Write-Log ""
+Write-Log "Enabling Hardware-Accelerated GPU Scheduling (HAGS)..." Cyan
 $graphicsPath = "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers"
 if (-not (Test-Path $graphicsPath)) { New-Item -Path $graphicsPath -Force | Out-Null }
 Set-ItemProperty -Path $graphicsPath -Name "HwSchMode" -Value 2 -Type DWord
-Write-Host "  [DONE] HAGS enabled (requires reboot + compatible GPU driver)" -ForegroundColor Green
+Write-Log "  [DONE] HAGS enabled (requires reboot + compatible GPU driver)" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: DWM PRIORITY + SYSTEM RESPONSIVENESS
+# v2: DWM PRIORITY
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Increasing DWM priority and system responsiveness..." -ForegroundColor Cyan
-
+Write-Log ""
+Write-Log "Increasing DWM priority and system responsiveness..." Cyan
 $mmProfilePath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
 if (-not (Test-Path $mmProfilePath)) { New-Item -Path $mmProfilePath -Force | Out-Null }
-Set-ItemProperty -Path $mmProfilePath -Name "SystemResponsiveness"   -Value 0          -Type DWord
-Set-ItemProperty -Path $mmProfilePath -Name "NetworkThrottlingIndex" -Value 0xffffffff  -Type DWord
-
+Set-ItemProperty -Path $mmProfilePath -Name "SystemResponsiveness"   -Value 0         -Type DWord
+Set-ItemProperty -Path $mmProfilePath -Name "NetworkThrottlingIndex" -Value 0xffffffff -Type DWord
 $mmGamesPath = "$mmProfilePath\Tasks\Games"
 if (-not (Test-Path $mmGamesPath)) { New-Item -Path $mmGamesPath -Force | Out-Null }
-Set-ItemProperty -Path $mmGamesPath -Name "GPU Priority"   -Value 8 -Type DWord
-Set-ItemProperty -Path $mmGamesPath -Name "Priority"       -Value 6 -Type DWord
+Set-ItemProperty -Path $mmGamesPath -Name "GPU Priority"        -Value 8      -Type DWord
+Set-ItemProperty -Path $mmGamesPath -Name "Priority"            -Value 6      -Type DWord
 Set-ItemProperty -Path $mmGamesPath -Name "Scheduling Category" -Value "High" -Type String
-Write-Host "  [DONE] DWM priority and multimedia responsiveness increased" -ForegroundColor Green
+Write-Log "  [DONE] DWM priority and multimedia responsiveness increased" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: NETWORK AUTO-TUNING
+# v2: NETWORK AUTO-TUNING
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Disabling network Auto-Tuning..." -ForegroundColor Cyan
-
+Write-Log ""
+Write-Log "Disabling network Auto-Tuning..." Cyan
 netsh int tcp set global autotuninglevel=disabled 2>&1 | Out-Null
-Write-Host "  [DONE] TCP Auto-Tuning disabled" -ForegroundColor Green
+Write-Log "  [DONE] TCP Auto-Tuning disabled" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: IPv6
+# v2: IPv6
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Disabling IPv6..." -ForegroundColor Cyan
-
+Write-Log ""
+Write-Log "Disabling IPv6..." Cyan
 Get-NetAdapter | ForEach-Object {
     Disable-NetAdapterBinding -Name $_.Name -ComponentID ms_tcpip6 -ErrorAction SilentlyContinue
 }
 $tcpip6Path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters"
 if (-not (Test-Path $tcpip6Path)) { New-Item -Path $tcpip6Path -Force | Out-Null }
 Set-ItemProperty -Path $tcpip6Path -Name "DisabledComponents" -Value 0xFF -Type DWord
-Write-Host "  [DONE] IPv6 disabled on all adapters" -ForegroundColor Green
+Write-Log "  [DONE] IPv6 disabled on all adapters" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: QoS BANDWIDTH RESERVATION
+# v2: QoS BANDWIDTH RESERVATION
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Removing QoS 20% bandwidth reservation..." -ForegroundColor Cyan
-
+Write-Log ""
+Write-Log "Removing QoS 20% bandwidth reservation..." Cyan
 $qosPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched"
 if (-not (Test-Path $qosPath)) { New-Item -Path $qosPath -Force | Out-Null }
 Set-ItemProperty -Path $qosPath -Name "NonBestEffortLimit" -Value 0 -Type DWord
-Write-Host "  [DONE] QoS bandwidth reservation set to 0%" -ForegroundColor Green
+Write-Log "  [DONE] QoS bandwidth reservation set to 0%" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: NTFS LAST ACCESS TIME
+# v2: NTFS LAST ACCESS TIME
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Disabling NTFS Last Access Time..." -ForegroundColor Cyan
-
+Write-Log ""
+Write-Log "Disabling NTFS Last Access Time..." Cyan
 fsutil behavior set disablelastaccess 1 | Out-Null
-Write-Host "  [DONE] NTFS Last Access Time disabled (reduces disk writes)" -ForegroundColor Green
+Write-Log "  [DONE] NTFS Last Access Time disabled (reduces disk writes)" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: NTFS 8.3 FILENAMES
+# v2: NTFS 8.3 FILENAMES
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Disabling NTFS 8.3 filename generation..." -ForegroundColor Cyan
-
+Write-Log ""
+Write-Log "Disabling NTFS 8.3 filename generation..." Cyan
 fsutil behavior set disable8dot3 1 | Out-Null
-Write-Host "  [DONE] NTFS 8.3 filename generation disabled" -ForegroundColor Green
+Write-Log "  [DONE] NTFS 8.3 filename generation disabled" Green
 
 # ─────────────────────────────────────────────
-# NEW v2: STARTUP APP DELAY
+# v2: STARTUP APP DELAY
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Removing startup app delay..." -ForegroundColor Cyan
-
+Write-Log ""
+Write-Log "Removing startup app delay..." Cyan
 $startupDelayPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize"
 if (-not (Test-Path $startupDelayPath)) { New-Item -Path $startupDelayPath -Force | Out-Null }
 Set-ItemProperty -Path $startupDelayPath -Name "StartupDelayInMSec" -Value 0 -Type DWord
-Write-Host "  [DONE] Startup app delay removed" -ForegroundColor Green
+Write-Log "  [DONE] Startup app delay removed" Green
 
 # ─────────────────────────────────────────────
 # SNAPSHOT: RAM + CPU after
 # ─────────────────────────────────────────────
-Write-Host ""
-Write-Host "Waiting 8 seconds for changes to settle..." -ForegroundColor Gray
+Write-Log ""
+Write-Log "Waiting 8 seconds for changes to settle..." Gray
 Start-Sleep -Seconds 8
 
 $memAfter    = Get-CimInstance -ClassName Win32_OperatingSystem
@@ -573,63 +624,69 @@ $cpuDiff     = [math]::Round($cpuBefore - $cpuAfter, 1)
 # ─────────────────────────────────────────────
 # FINAL REPORT
 # ─────────────────────────────────────────────
-Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "  RESULTS" -ForegroundColor Cyan
-Write-Host "============================================" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "  Apps removed              : $appsRemoved"               -ForegroundColor Green
-Write-Host "  Apps not found            : $appsNotFound"              -ForegroundColor DarkGray
-Write-Host ""
-Write-Host "  Services disabled         : $disabled"                  -ForegroundColor Green
-Write-Host "  Services already disabled : $skipped"                   -ForegroundColor DarkGray
-Write-Host "  Services not found        : $notFound"                  -ForegroundColor DarkGray
-Write-Host ""
-Write-Host "  Scheduled tasks disabled  : $tasksDisabled"             -ForegroundColor Green
-Write-Host "  Scheduled tasks not found : $tasksNotFound"             -ForegroundColor DarkGray
-Write-Host ""
-Write-Host "  Total RAM                 : $totalMB MB"                -ForegroundColor White
-Write-Host ""
-Write-Host "  [BEFORE] Used RAM   : $usedBeforeMB MB  |  Free: $freeBeforeMB MB" -ForegroundColor Yellow
-Write-Host "  [AFTER]  Used RAM   : $usedAfterMB MB  |  Free: $freeAfterMB MB"   -ForegroundColor Green
+Write-Log ""
+Write-Log "============================================" Cyan
+Write-Log "  RESULTS" Cyan
+Write-Log "============================================" Cyan
+Write-Log ""
+Write-Log "  Apps removed              : $appsRemoved"               Green
+Write-Log "  Apps not found            : $appsNotFound"              DarkGray
+Write-Log ""
+Write-Log "  Services disabled         : $disabled"                  Green
+Write-Log "  Services already disabled : $skipped"                   DarkGray
+Write-Log "  Services not found        : $notFound"                  DarkGray
+Write-Log ""
+Write-Log "  Scheduled tasks disabled  : $tasksDisabled"             Green
+Write-Log "  Scheduled tasks not found : $tasksNotFound"             DarkGray
+Write-Log ""
+Write-Log "  Total RAM                 : $totalMB MB"                White
+Write-Log ""
+Write-Log "  [BEFORE] Used RAM   : $usedBeforeMB MB  |  Free: $freeBeforeMB MB" Yellow
+Write-Log "  [AFTER]  Used RAM   : $usedAfterMB MB  |  Free: $freeAfterMB MB"   Green
 
 if ($savedMB -gt 0) {
-    Write-Host "  RAM freed           : +$savedMB MB ($savedPct% of total)"       -ForegroundColor Green
+    Write-Log "  RAM freed           : +$savedMB MB ($savedPct% of total)"       Green
 } else {
-    Write-Host "  RAM freed           : $savedMB MB (reboot to see full effect)"   -ForegroundColor DarkYellow
+    Write-Log "  RAM freed           : $savedMB MB (reboot to see full effect)"   DarkYellow
 }
 
-Write-Host ""
-Write-Host "  [BEFORE] CPU Load   : $cpuBefore %"                    -ForegroundColor Yellow
-Write-Host "  [AFTER]  CPU Load   : $cpuAfter %"                     -ForegroundColor Green
+Write-Log ""
+Write-Log "  [BEFORE] CPU Load   : $cpuBefore %"                    Yellow
+Write-Log "  [AFTER]  CPU Load   : $cpuAfter %"                     Green
 
 if ($cpuDiff -gt 0) {
-    Write-Host "  CPU reduction       : -$cpuDiff %"                 -ForegroundColor Green
+    Write-Log "  CPU reduction       : -$cpuDiff %"                 Green
 } elseif ($cpuDiff -lt 0) {
-    Write-Host "  CPU delta           : $cpuDiff % (snapshot variance, reboot to confirm)" -ForegroundColor DarkYellow
+    Write-Log "  CPU delta           : $cpuDiff % (snapshot variance, reboot to confirm)" DarkYellow
 } else {
-    Write-Host "  CPU delta           : no change in snapshot (reboot to see full effect)"  -ForegroundColor DarkGray
+    Write-Log "  CPU delta           : no change in snapshot (reboot to see full effect)"  DarkGray
 }
 
-Write-Host ""
-Write-Host "  v2 optimizations applied:" -ForegroundColor White
-Write-Host "    - Timeline / Activity History disabled"               -ForegroundColor Green
-Write-Host "    - $tasksDisabled telemetry scheduled tasks disabled"  -ForegroundColor Green
-Write-Host "    - CPU Core Parking disabled"                          -ForegroundColor Green
-Write-Host "    - Fast Startup disabled"                              -ForegroundColor Green
-Write-Host "    - Automatic Maintenance disabled"                     -ForegroundColor Green
-Write-Host "    - Window transparency (Acrylic/Mica) disabled"        -ForegroundColor Green
-Write-Host "    - Snap Assist disabled"                               -ForegroundColor Green
-Write-Host "    - Window shadows disabled"                            -ForegroundColor Green
-Write-Host "    - HAGS (GPU Scheduling) enabled"                      -ForegroundColor Green
-Write-Host "    - DWM priority and responsiveness increased"          -ForegroundColor Green
-Write-Host "    - Network Auto-Tuning disabled"                       -ForegroundColor Green
-Write-Host "    - IPv6 disabled"                                      -ForegroundColor Green
-Write-Host "    - QoS bandwidth reservation removed"                  -ForegroundColor Green
-Write-Host "    - NTFS Last Access Time disabled"                     -ForegroundColor Green
-Write-Host "    - NTFS 8.3 filename generation disabled"              -ForegroundColor Green
-Write-Host "    - Startup app delay removed"                          -ForegroundColor Green
-Write-Host ""
-Write-Host "  A restore point was created before any changes."        -ForegroundColor Cyan
-Write-Host "  REBOOT REQUIRED to fully apply all changes."            -ForegroundColor Cyan
-Write-Host "============================================" -ForegroundColor Cyan
-Write-Host ""
+Write-Log ""
+Write-Log "  v2 optimizations applied:"                              White
+Write-Log "    - Timeline / Activity History disabled"               Green
+Write-Log "    - $tasksDisabled telemetry scheduled tasks disabled"  Green
+Write-Log "    - CPU Core Parking disabled"                          Green
+Write-Log "    - Fast Startup disabled"                              Green
+Write-Log "    - Automatic Maintenance disabled"                     Green
+Write-Log "    - Window transparency (Acrylic/Mica) disabled"        Green
+Write-Log "    - Snap Assist disabled"                               Green
+Write-Log "    - Window shadows disabled"                            Green
+Write-Log "    - HAGS (GPU Scheduling) enabled"                      Green
+Write-Log "    - DWM priority and responsiveness increased"          Green
+Write-Log "    - Network Auto-Tuning disabled"                       Green
+Write-Log "    - IPv6 disabled"                                      Green
+Write-Log "    - QoS bandwidth reservation removed"                  Green
+Write-Log "    - NTFS Last Access Time disabled"                     Green
+Write-Log "    - NTFS 8.3 filename generation disabled"              Green
+Write-Log "    - Startup app delay removed"                          Green
+Write-Log ""
+Write-Log "  A restore point was created before any changes."        Cyan
+Write-Log "  REBOOT REQUIRED to fully apply all changes."            Cyan
+Write-Log "============================================" Cyan
+Write-Log ""
+
+# ─────────────────────────────────────────────
+# SAVE HTML LOG
+# ─────────────────────────────────────────────
+Save-HtmlLog

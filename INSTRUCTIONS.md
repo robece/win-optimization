@@ -1,4 +1,4 @@
-# Execution Instructions
+# Execution Instructions — v1
 
 ## Requirements
 
@@ -44,15 +44,18 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 .\Optimize-W11DevVM.ps1
 ```
 
-### 5a. Run and save output to a log file (optional)
+### 6. Check the HTML log
 
-```powershell
-.\Optimize-W11DevVM.ps1 | Tee-Object -FilePath "C:\optimize-log.txt"
+When the script finishes it automatically generates:
+
+```
+optimize-log.html
 ```
 
-The log file will be saved at `C:\optimize-log.txt`.
+in the same folder where the script is located. Open it in any browser to see
+the full execution log with colors preserved.
 
-### 6. Reboot
+### 7. Reboot
 
 A reboot is recommended after the script finishes to fully apply all changes.
 
@@ -67,7 +70,9 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 .\Restore-W11DevVM.ps1
 ```
 
-> **Note:** Apps removed by `Optimize-W11DevVM.ps1` cannot be restored via script.
+A restore log will be generated at `restore-log.html` in the same folder.
+
+> **Note:** Apps removed by the optimization scripts cannot be restored via script.
 > Use the Microsoft Store to reinstall them, or use the System Restore point
 > that was created automatically before the optimization ran.
 

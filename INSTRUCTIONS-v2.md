@@ -48,15 +48,18 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 .\Optimize-W11DevVM-v2.ps1
 ```
 
-### 5a. Run and save output to a log file (optional)
+### 6. Check the HTML log
 
-```powershell
-.\Optimize-W11DevVM-v2.ps1 | Tee-Object -FilePath "C:\optimize-v2-log.txt"
+When the script finishes it automatically generates:
+
+```
+optimize-v2-log.html
 ```
 
-The log file will be saved at `C:\optimize-v2-log.txt`.
+in the same folder where the script is located. Open it in any browser to see
+the full execution log with colors preserved — no extra commands needed.
 
-### 6. Reboot
+### 7. Reboot
 
 A reboot is **required** after the script finishes. Some optimizations
 (HAGS, NTFS, IPv6, Core Parking) only take effect after a full restart.
@@ -91,12 +94,14 @@ A reboot is **required** after the script finishes. Some optimizations
 
 ## How to revert
 
-To re-enable services and restore registry/CPU settings to Windows defaults:
+To re-enable services and restore all registry/CPU/network settings to Windows defaults:
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 .\Restore-W11DevVM.ps1
 ```
+
+A restore log will be generated at `restore-log.html` in the same folder.
 
 > **Note:** Apps removed by the optimization scripts cannot be restored via script.
 > Use the Microsoft Store to reinstall them, or use the System Restore point

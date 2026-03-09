@@ -32,11 +32,23 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 # Run v1 only
 .\Optimize-W11DevVM.ps1
 
-# Revert (services + registry only — apps must be reinstalled manually)
+# Revert all changes
 .\Restore-W11DevVM.ps1
 ```
 
 > A System Restore point is created automatically before any changes are applied.
+
+## HTML logs
+
+Every script generates a full-color HTML log automatically in the same folder:
+
+| Script | Log file |
+|---|---|
+| `Optimize-W11DevVM.ps1` | `optimize-log.html` |
+| `Optimize-W11DevVM-v2.ps1` | `optimize-v2-log.html` |
+| `Restore-W11DevVM.ps1` | `restore-log.html` |
+
+Open any of these in a browser after execution to review the full output with colors preserved.
 
 ---
 
