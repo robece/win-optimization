@@ -236,7 +236,6 @@ $servicesToDisable = @(
     @{ Name = "WMPNetworkSvc";          Reason = "Windows Media Player Network Sharing" }
     @{ Name = "RetailDemo";             Reason = "Retail Demo Service" }
     @{ Name = "MapsBroker";             Reason = "Downloaded Maps Manager" }
-    @{ Name = "InstallService";         Reason = "Microsoft Store Install Service" }
     @{ Name = "RemoteRegistry";         Reason = "Remote Registry access" }
     @{ Name = "RemoteAccess";           Reason = "Routing and Remote Access" }
     @{ Name = "SessionEnv";             Reason = "Remote Desktop Configuration" }

@@ -106,7 +106,7 @@ Open any of these in a browser after execution to review the full output with co
 | Cortana App | `Microsoft.549981C3F5F10` |
 | Whiteboard | `Microsoft.Whiteboard` |
 
-> **Preserved:** Office 365, Teams, OneDrive, Notepad, Calculator, Paint, Snipping Tool, Windows Terminal.
+> **Preserved:** Office 365, Teams, OneDrive, Notepad, Calculator, Paint, Snipping Tool, Windows Terminal, Microsoft Store (`InstallService`).
 
 ---
 
@@ -141,7 +141,6 @@ Open any of these in a browser after execution to review the full output with co
 | `WMPNetworkSvc` | Windows Media Player Network Sharing |
 | `RetailDemo` | Device Management Retail Demo Service |
 | `MapsBroker` | Downloaded Maps Manager |
-| `InstallService` | Microsoft Store Install Service |
 
 ### Remote Access
 | Service Name | Display Name |

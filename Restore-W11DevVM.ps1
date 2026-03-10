@@ -128,7 +128,6 @@ $servicesToRestore = @(
     @{ Name = "WMPNetworkSvc";          StartupType = "Manual" }
     @{ Name = "RetailDemo";             StartupType = "Disabled" }
     @{ Name = "MapsBroker";             StartupType = "Automatic" }
-    @{ Name = "InstallService";         StartupType = "Manual" }
     @{ Name = "RemoteRegistry";         StartupType = "Disabled" }
     @{ Name = "RemoteAccess";           StartupType = "Disabled" }
     @{ Name = "SessionEnv";             StartupType = "Manual" }
