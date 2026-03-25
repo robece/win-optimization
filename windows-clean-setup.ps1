@@ -134,7 +134,7 @@ Write-OK "Clipboard history disabled"
 Set-RegistryValue "HKCU:\Software\Microsoft\Clipboard" "CloudClipboardAutomaticUpload" 0
 Write-OK "Cloud clipboard sync disabled"
 
-# Clear current clipboard contents via cmd (Set-Clipboard rejects empty strings)
+# Clear current clipboard contents
 Start-Process "cmd.exe" -ArgumentList "/c", "echo.|clip" -WindowStyle Hidden -Wait
 Write-OK "Clipboard cleared"
 
@@ -144,7 +144,6 @@ Write-OK "Clipboard cleared"
 # ============================================================
 Write-Section "5. Telemetry & Diagnostics"
 
-# Minimum telemetry level (0 = Security on Enterprise/Education, 1 = Basic on Home)
 Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry" 0
 Set-RegistryValue "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection" "AllowTelemetry" 0
 Write-OK "Telemetry reduced to minimum"
@@ -191,7 +190,7 @@ Write-OK "Silent app installs disabled"
 # ============================================================
 Write-Section "7. Taskbar -- Clean Mode"
 
-# Move taskbar icons to the left (GNOME-style, away from Windows 11 center default)
+# Move taskbar icons to the left
 Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "TaskbarAl" 0
 Write-OK "Taskbar aligned to the left"
 
@@ -203,7 +202,7 @@ Write-OK "Search button hidden from taskbar"
 Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "ShowTaskViewButton" 0
 Write-OK "Task View button hidden"
 
-# Hide Widgets button — use policy path (HKCU Feeds key is protected in Windows 11)
+# Hide Widgets button
 Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "TaskbarDa" 0
 Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Dsh" "AllowNewsAndInterests" 0
 Write-OK "Widgets hidden from taskbar"
@@ -212,7 +211,7 @@ Write-OK "Widgets hidden from taskbar"
 Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "TaskbarMn" 0
 Write-OK "Chat/Teams button hidden"
 
-# Hide News and Interests — use policy path (HKCU Feeds key is protected in Windows 11)
+# Hide News and Interests
 Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" "EnableFeeds" 0
 Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Feeds" "ShellFeedsTaskbarViewMode" 2
 Write-OK "News and Interests hidden"
@@ -223,7 +222,6 @@ Write-OK "News and Interests hidden"
 # ============================================================
 Write-Section "8. Explorer -- Clean View"
 
-# Show file extensions (important for security)
 Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "HideFileExt" 0
 Write-OK "File extensions visible"
 
@@ -272,7 +270,6 @@ Write-OK "Bing/Spotlight images on lock screen disabled"
 # ============================================================
 Write-Section "11. SuperFetch / SysMain"
 
-# On SSDs this service is unnecessary and logs app usage history
 $superfetch = Get-Service -Name "SysMain" -ErrorAction SilentlyContinue
 if ($superfetch) {
     Stop-Service -Name "SysMain" -Force -ErrorAction SilentlyContinue
@@ -350,5 +347,4 @@ Write-Host "  - No Bing in local search"
 Write-Host "  - Explorer opens to 'This PC'"
 Write-Host "  - No recommendations in Start Menu"
 Write-Host ""
-Write-Host "  Restart your PC to ensure all changes take full effect." -ForegroundColor Yellow
 Write-Host ""
