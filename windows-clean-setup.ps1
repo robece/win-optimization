@@ -31,10 +31,16 @@ function Write-OK($msg)   { Write-Host "  [OK] $msg" -ForegroundColor Green }
 function Write-INFO($msg) { Write-Host "  [--] $msg" -ForegroundColor DarkGray }
 
 function Set-RegistryValue($path, $name, $value, $type = "DWord") {
-    if (-not (Test-Path $path)) {
-        New-Item -Path $path -Force | Out-Null
+    try {
+        if (-not (Test-Path $path)) {
+            New-Item -Path $path -Force | Out-Null
+        }
+        Set-ItemProperty -Path $path -Name $name -Value $value -Type $type -Force -ErrorAction Stop
+        return $true
+    } catch {
+        Write-Host "  [WARN] Could not set $name : $_" -ForegroundColor Yellow
+        return $false
     }
-    Set-ItemProperty -Path $path -Name $name -Value $value -Type $type -Force
 }
 
 Write-Host ""
@@ -197,15 +203,17 @@ Write-OK "Search button hidden from taskbar"
 Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "ShowTaskViewButton" 0
 Write-OK "Task View button hidden"
 
-# Hide Widgets button
+# Hide Widgets button — use policy path (HKCU Feeds key is protected in Windows 11)
 Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "TaskbarDa" 0
+Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Dsh" "AllowNewsAndInterests" 0
 Write-OK "Widgets hidden from taskbar"
 
 # Hide Chat (Teams) button
 Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "TaskbarMn" 0
 Write-OK "Chat/Teams button hidden"
 
-# Hide News and Interests
+# Hide News and Interests — use policy path (HKCU Feeds key is protected in Windows 11)
+Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" "EnableFeeds" 0
 Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Feeds" "ShellFeedsTaskbarViewMode" 2
 Write-OK "News and Interests hidden"
 
