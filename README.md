@@ -4,25 +4,25 @@ PowerShell scripts to optimize and configure Windows 11 for performance, privacy
 
 ---
 
-## Scripts
+## Structure
 
-| Script | Description |
-|---|---|
-| `Optimize-W11DevVM.ps1` | v1 — Removes bloatware, disables services, applies CPU/RAM tweaks |
-| `Optimize-W11DevVM-v2.ps1` | v2 — All v1 optimizations + network, NTFS, fluidity, scheduled tasks |
-| `Restore-W11DevVM.ps1` | Re-enables services and reverts registry/CPU changes from v1/v2 |
-| `windows-clean-setup.ps1` | Clean & private environment — disables recent files, telemetry, cleans UI |
-| `INSTRUCTIONS.md` | Step-by-step guide for running v1 |
-| `INSTRUCTIONS-v2.md` | Step-by-step guide for running v2 |
-
-> **For VM optimization:** Run `Optimize-W11DevVM-v2.ps1` — it is a standalone script
-> that includes everything from v1 plus all v2 optimizations.
->
-> **For a clean private desktop:** Run `windows-clean-setup.ps1` on any Windows 11 machine.
+```
+win-optimization/
+├── Optimization/
+│   ├── Optimize-W11DevVM-v2.ps1   # Full VM optimization (performance, privacy, services)
+│   └── INSTRUCTIONS.md            # Step-by-step execution guide
+└── Experience/
+    ├── windows-clean-setup.ps1    # Clean & private environment (GNOME-style UI)
+    └── Set-RoyalTheme.ps1         # Royal XP Blue theme with rollback support
+```
 
 ---
 
-## Usage
+## Optimization
+
+Full optimization for Windows 11 virtual machines used in corporate development environments targeting **Office 365** and **Microsoft Teams**.
+
+### Usage
 
 Run **as Administrator** in PowerShell:
 
@@ -30,69 +30,17 @@ Run **as Administrator** in PowerShell:
 # Allow execution for this session
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
-# VM optimization — v2 (recommended)
-.\Optimize-W11DevVM-v2.ps1
-
-# VM optimization — v1 only
-.\Optimize-W11DevVM.ps1
-
-# Clean & private environment
-.\windows-clean-setup.ps1
-
-# Revert VM optimization changes
-.\Restore-W11DevVM.ps1
+# Run the optimization
+.\Optimization\Optimize-W11DevVM-v2.ps1
 ```
 
-> A System Restore point is created automatically before any optimization changes are applied.
-
----
-
-## windows-clean-setup.ps1
-
-Configures a clean, private Windows 11 environment inspired by the minimalist GNOME experience.
+> A System Restore point named **"Before W11 VM Optimization v2"** is created automatically before any changes are applied.
+>
+> See `Optimization\INSTRUCTIONS.md` for the full step-by-step guide.
 
 ### What it does
 
-**Privacy**
-- Disables recent files and Jump Lists
-- Clears and disables activity history (Timeline)
-- Disables search history and Bing in local search
-- Disables clipboard history and cloud sync
-- Disables telemetry, advertising ID, and error reporting
-- Disables personalized suggestions and silent app installs
-- Disables notifications and Bing/Spotlight on lock screen
-
-**Clean UI (GNOME-style)**
-- Taskbar aligned to the left
-- Removes Widgets, Chat (Teams), and Task View buttons from taskbar
-- Hides search button from taskbar
-- Explorer opens to "This PC" instead of Quick Access
-- Removes recommendations from Start Menu
-- Disables cloud content in Start Menu
-
-**Performance**
-- Disables SysMain (SuperFetch) — recommended for SSDs
-- Cleans temporary files and caches
-
----
-
-## Optimize-W11DevVM-v2.ps1
-
-Full optimization for Windows 11 virtual machines used in corporate development environments targeting **Office 365** and **Microsoft Teams**.
-
-### HTML logs
-
-Every optimization script generates a full-color HTML log in the same folder:
-
-| Script | Log file |
-|---|---|
-| `Optimize-W11DevVM.ps1` | `optimize-log.html` |
-| `Optimize-W11DevVM-v2.ps1` | `optimize-v2-log.html` |
-| `Restore-W11DevVM.ps1` | `restore-log.html` |
-
----
-
-## What gets removed (Apps)
+**Apps removed**
 
 | App | Package Name |
 |---|---|
@@ -146,156 +94,42 @@ Every optimization script generates a full-color HTML log in the same folder:
 | Cortana App | `Microsoft.549981C3F5F10` |
 | Whiteboard | `Microsoft.Whiteboard` |
 
-> **Preserved:** Office 365, Teams, OneDrive, Notepad, Calculator, Paint, Snipping Tool, Windows Terminal, Microsoft Store (`InstallService`).
+> **Preserved:** Office 365, Teams, OneDrive, Notepad, Calculator, Paint, Snipping Tool, Windows Terminal, Microsoft Store.
 
----
+**Services disabled**
 
-## What gets disabled (Services)
-
-### Telemetry & Diagnostics
-| Service Name | Display Name |
+| Category | Services |
 |---|---|
-| `DiagTrack` | Connected User Experiences and Telemetry |
-| `dmwappushservice` | WAP Push Message Routing Service |
-| `PcaSvc` | Program Compatibility Assistant Service |
-| `DPS` | Diagnostic Policy Service |
-| `WdiServiceHost` | Diagnostic Service Host |
-| `WdiSystemHost` | Diagnostic System Host |
+| Telemetry & Diagnostics | `DiagTrack`, `dmwappushservice`, `PcaSvc`, `DPS`, `WdiServiceHost`, `WdiSystemHost` |
+| Search & Prefetch | `WSearch`, `SysMain` |
+| Gaming & Xbox | `XblAuthManager`, `XblGameSave`, `XboxNetApiSvc`, `XboxGipSvc`, `GamingServices`, `spectrum`, `perceptionsimulation`, `WMPNetworkSvc`, `RetailDemo`, `MapsBroker` |
+| Remote Access | `RemoteRegistry`, `RemoteAccess`, `SessionEnv`, `TermService`, `UmRdpService`, `RasMan`, `RasAuto`, `SstpSvc` |
+| Printing & Scanning | `Spooler`, `PrintNotify`, `stisvc` |
+| Fax & Telephony | `Fax`, `TapiSrv` |
+| Biometrics & Sensors | `WbioSrvc`, `SensrSvc`, `SensorDataService`, `SensorService` |
+| Smart Card | `SCardSvr`, `ScDeviceEnum`, `SCPolicySvc` |
+| Bluetooth | `bthserv`, `BTAGService`, `BthAvctpSvc` |
+| Tablet & Camera | `TabletInputService`, `FrameServer` |
+| Error Reporting | `wercplsupport`, `WerSvc` |
+| Miscellaneous | `seclogon`, `CscService`, `HomeGroupListener`, `HomeGroupProvider` |
 
-### Search & Prefetch (CPU/IO)
-| Service Name | Display Name |
-|---|---|
-| `WSearch` | Windows Search (indexing) |
-| `SysMain` | Superfetch / SysMain |
-
-### Gaming & Xbox
-| Service Name | Display Name |
-|---|---|
-| `XblAuthManager` | Xbox Live Auth Manager |
-| `XblGameSave` | Xbox Live Game Save |
-| `XboxNetApiSvc` | Xbox Live Networking Service |
-| `XboxGipSvc` | Xbox Accessory Management Service |
-| `GamingServices` | Gaming Services |
-| `spectrum` | Windows Perception Service |
-| `perceptionsimulation` | Windows Perception Simulation Service |
-| `WMPNetworkSvc` | Windows Media Player Network Sharing |
-| `RetailDemo` | Device Management Retail Demo Service |
-| `MapsBroker` | Downloaded Maps Manager |
-
-### Remote Access
-| Service Name | Display Name |
-|---|---|
-| `RemoteRegistry` | Remote Registry |
-| `RemoteAccess` | Routing and Remote Access |
-| `SessionEnv` | Remote Desktop Configuration |
-| `TermService` | Remote Desktop Services |
-| `UmRdpService` | Remote Desktop Device Redirector Driver |
-| `RasMan` | Remote Access Connection Manager |
-| `RasAuto` | Remote Access Auto Connection Manager |
-| `SstpSvc` | Secure Socket Tunneling Protocol Service |
-
-### Printing & Scanning
-| Service Name | Display Name |
-|---|---|
-| `Spooler` | Print Spooler |
-| `PrintNotify` | Printer Extensions and Notifications |
-| `stisvc` | Windows Image Acquisition (WIA) |
-
-### Fax & Telephony
-| Service Name | Display Name |
-|---|---|
-| `Fax` | Fax |
-| `TapiSrv` | Telephony |
-
-### Biometrics & Sensors
-| Service Name | Display Name |
-|---|---|
-| `WbioSrvc` | Windows Biometric Service |
-| `SensrSvc` | Sensor Monitoring Service |
-| `SensorDataService` | Sensor Data Service |
-| `SensorService` | Sensor Service |
-
-### Smart Card
-| Service Name | Display Name |
-|---|---|
-| `SCardSvr` | Smart Card |
-| `ScDeviceEnum` | Smart Card Device Enumeration Service |
-| `SCPolicySvc` | Smart Card Removal Policy |
-
-### Parental Controls
-| Service Name | Display Name |
-|---|---|
-| `WpcMonSvc` | Parental Controls |
-
-### Bluetooth
-| Service Name | Display Name |
-|---|---|
-| `bthserv` | Bluetooth Support Service |
-| `BTAGService` | Bluetooth Audio Gateway Service |
-| `BthAvctpSvc` | AVCTP Service |
-
-### Tablet & Camera
-| Service Name | Display Name |
-|---|---|
-| `TabletInputService` | Touch Keyboard and Handwriting Panel Service |
-| `FrameServer` | Windows Camera Frame Server |
-
-### Error Reporting
-| Service Name | Display Name |
-|---|---|
-| `wercplsupport` | Problem Reports Control Panel Support |
-| `WerSvc` | Windows Error Reporting Service |
-
-### Miscellaneous
-| Service Name | Display Name |
-|---|---|
-| `seclogon` | Secondary Logon |
-| `CscService` | Offline Files |
-| `HomeGroupListener` | HomeGroup Listener |
-| `HomeGroupProvider` | HomeGroup Provider |
-
----
-
-## CPU optimizations applied
+**CPU & Performance**
 
 | Optimization | Detail |
 |---|---|
 | Power plan | Set to **High Performance** |
 | Visual effects | Disabled (best performance mode) |
-| Animations | Taskbar, window, menu animations disabled |
+| Animations | Taskbar, window, and menu animations disabled |
 | Background UWP apps | Global disable via registry |
 | Game Bar / Game DVR | Disabled via registry + policy |
-| Taskbar Widgets | Disabled via policy |
-| Processor scheduling | Set to **Background Services** (benefits compilers, dev servers) |
-
----
-
-## Registry tweaks applied
-
-| Key | Value | Effect |
-|---|---|---|
-| `HKLM:\..\Windows Search\AllowCortana` | `0` | Disables Cortana |
-| `HKLM:\..\DataCollection\AllowTelemetry` | `0` | Disables telemetry |
-| `HKCU:\..\AdvertisingInfo\Enabled` | `0` | Disables advertising ID |
-
----
-
-## v2 — Additional optimizations
-
-### RAM
-| Optimization | Detail |
-|---|---|
-| Timeline / Activity History | Disabled via policy registry keys |
-
-### CPU
-| Optimization | Detail |
-|---|---|
-| Telemetry scheduled tasks | 18 background tasks disabled (diagnostics, CEIP, error reporting, maps, etc.) |
+| Processor scheduling | Set to **Background Services** (benefits compilers and dev servers) |
 | Core Parking | Disabled — all CPU cores stay active, eliminates micro-stutters in VMs |
 | Fast Startup | Disabled — prevents hybrid boot state that causes I/O and CPU overhead |
 | Automatic Maintenance | Disabled — stops background defrag, indexing, and diagnostics |
+| Telemetry scheduled tasks | 18 background tasks disabled |
 
-### Window Fluidity
+**Window Fluidity**
+
 | Optimization | Detail |
 |---|---|
 | Transparency (Acrylic/Mica) | Disabled — removes constant GPU/CPU blur rendering |
@@ -304,31 +138,106 @@ Every optimization script generates a full-color HTML log in the same folder:
 | HAGS | Enabled — Hardware-Accelerated GPU Scheduling reduces frame latency |
 | DWM priority | Increased — Desktop Window Manager gets higher scheduling priority |
 
-### Network
+**Network**
+
 | Optimization | Detail |
 |---|---|
 | TCP Auto-Tuning | Disabled — reduces overhead on VM virtual adapters |
 | IPv6 | Disabled on all adapters — removes unused network stack overhead |
 | QoS bandwidth reservation | Set to 0% — removes the default 20% bandwidth reservation |
 
-### NTFS / Disk
+**NTFS / Disk**
+
 | Optimization | Detail |
 |---|---|
 | Last Access Time | Disabled — eliminates write on every file read |
 | 8.3 filename generation | Disabled — removes legacy short filename creation overhead |
-
-### Startup
-| Optimization | Detail |
-|---|---|
 | Startup app delay | Removed — eliminates the 10-second artificial delay Windows adds at boot |
+
+### HTML log
+
+When the script finishes it automatically generates `optimize-v2-log.html` in the same folder.
+Open it in any browser to see the full execution log with colors.
+
+### Restoring changes
+
+> There is no restore script. Use the **System Restore point** created automatically at optimization time.
+>
+> Press `Win + R` → type `rstrui` → select **"Before W11 VM Optimization v2"**.
+>
+> **Note:** Removed apps cannot be restored via System Restore. Use the Microsoft Store to reinstall them individually.
 
 ---
 
-## Restoring changes
+## Experience
 
-Run `Restore-W11DevVM.ps1` as Administrator to re-enable services, revert registry keys,
-restore the Balanced power plan, and re-enable visual effects.
+Scripts that improve the daily Windows 11 experience: a clean private environment and a custom visual theme.
 
-> **Note:** Removed apps cannot be restored via `Restore-W11DevVM.ps1`.
-> Use the Microsoft Store to reinstall them individually, or use the
-> System Restore point created at optimization time.
+---
+
+### windows-clean-setup.ps1
+
+Configures a clean, private Windows 11 environment inspired by the minimalist GNOME experience.
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+.\Experience\windows-clean-setup.ps1
+```
+
+**Privacy**
+- Disables recent files and Jump Lists
+- Clears and disables activity history (Timeline)
+- Disables search history and Bing in local search
+- Disables clipboard history and cloud sync
+- Disables telemetry, advertising ID, and error reporting
+- Disables personalized suggestions and silent app installs
+- Disables notifications and Bing/Spotlight on lock screen
+
+**Clean UI (GNOME-style)**
+- Taskbar aligned to the left
+- Removes Widgets, Chat (Teams), and Task View buttons from taskbar
+- Hides search button from taskbar
+- Explorer opens to "This PC" instead of Quick Access
+- Removes recommendations from Start Menu
+- Disables cloud content in Start Menu
+
+**Performance**
+- Disables SysMain (SuperFetch) — recommended for SSDs
+- Cleans temporary files and caches
+
+---
+
+### Set-RoyalTheme.ps1
+
+Applies a Royal Blue (Windows XP-inspired) visual theme via registry, with full rollback support.
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+
+# Apply Royal theme
+.\Experience\Set-RoyalTheme.ps1
+
+# Undo and restore previous theme
+.\Experience\Set-RoyalTheme.ps1 -Rollback
+```
+
+**What it applies**
+
+| Setting | Value | Effect |
+|---|---|---|
+| `AppsUseLightTheme` | `1` | Apps in light mode |
+| `SystemUsesLightTheme` | `1` | Shell and taskbar in light mode |
+| `ColorPrevalence` | `1` | Accent color shown on taskbar and title bars |
+| `AccentColor` | `#003399` | Royal Blue on taskbar and Start button |
+| `AccentColorInactive` | `#1A4DB5` | Muted Royal Blue on inactive title bars |
+| `ColorizationColor` | `#003399` (80% opacity) | Royal Blue window borders |
+| `ColorizationColorBalance` | `78` | Rich saturated color (classic XP feel) |
+
+**Rollback**
+
+Before applying any change, the script saves a backup of the current registry values to `Experience\royal-theme-backup.json`.
+
+Running with `-Rollback`:
+- Restores values that existed before to their original state
+- Removes values that were not present before (no residue)
+- Leaves the registry exactly as it was
