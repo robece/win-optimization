@@ -134,8 +134,8 @@ Write-OK "Clipboard history disabled"
 Set-RegistryValue "HKCU:\Software\Microsoft\Clipboard" "CloudClipboardAutomaticUpload" 0
 Write-OK "Cloud clipboard sync disabled"
 
-# Clear current clipboard contents using Set-Clipboard (STA-safe)
-Set-Clipboard -Value ""
+# Clear current clipboard contents via cmd (Set-Clipboard rejects empty strings)
+Start-Process "cmd.exe" -ArgumentList "/c", "echo.|clip" -WindowStyle Hidden -Wait
 Write-OK "Clipboard cleared"
 
 
