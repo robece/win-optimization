@@ -56,8 +56,8 @@ Write-Host ""
 Write-Section "1. Recent Files & Quick Access"
 
 # Disable recent and frequent files in Explorer Quick Access
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" "ShowRecent" 0
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" "ShowFrequent" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" "ShowRecent" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" "ShowFrequent" 0
 Write-OK "Quick Access: recent and frequent files disabled"
 
 # Clear recent files history
@@ -72,11 +72,11 @@ foreach ($path in $recentPaths) {
 Write-OK "Recent files history cleared"
 
 # Disable document tracking in Start Menu Jump Lists
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "Start_TrackDocs" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "Start_TrackDocs" 0
 Write-OK "Document tracking in Start Menu disabled"
 
 # Disable Jump Lists (recent files list in taskbar)
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "Start_TrackProgs" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "Start_TrackProgs" 0
 Write-OK "Jump Lists disabled"
 
 
@@ -85,9 +85,9 @@ Write-OK "Jump Lists disabled"
 # ============================================================
 Write-Section "2. Activity History"
 
-Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "EnableActivityFeed" 0
-Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "PublishUserActivities" 0
-Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "UploadUserActivities" 0
+$null = Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "EnableActivityFeed" 0
+$null = Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "PublishUserActivities" 0
+$null = Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" "UploadUserActivities" 0
 Write-OK "Activity Feed (Timeline) disabled"
 
 # Clear accumulated activity history by removing the registry key
@@ -101,16 +101,16 @@ Write-OK "Activity history cleared"
 Write-Section "3. Search & Cortana"
 
 # Disable search history
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\SearchSettings" "IsDeviceSearchHistoryEnabled" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\SearchSettings" "IsDeviceSearchHistoryEnabled" 0
 Write-OK "Search history disabled"
 
 # Disable Bing suggestions in local search
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "BingSearchEnabled" 0
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "CortanaConsent" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "BingSearchEnabled" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "CortanaConsent" 0
 Write-OK "Bing in local search disabled"
 
 # Disable location-based search
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "AllowSearchToUseLocation" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "AllowSearchToUseLocation" 0
 Write-OK "Location-based search disabled"
 
 # Clear Explorer search history (WordWheel) - remove all values under the key
@@ -127,11 +127,11 @@ if (Test-Path $wordWheelPath) {
 Write-Section "4. Clipboard"
 
 # Disable clipboard history (Win+V)
-Set-RegistryValue "HKCU:\Software\Microsoft\Clipboard" "EnableClipboardHistory" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Clipboard" "EnableClipboardHistory" 0
 Write-OK "Clipboard history disabled"
 
 # Disable cross-device clipboard sync
-Set-RegistryValue "HKCU:\Software\Microsoft\Clipboard" "CloudClipboardAutomaticUpload" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Clipboard" "CloudClipboardAutomaticUpload" 0
 Write-OK "Cloud clipboard sync disabled"
 
 # Clear current clipboard contents
@@ -144,20 +144,20 @@ Write-OK "Clipboard cleared"
 # ============================================================
 Write-Section "5. Telemetry & Diagnostics"
 
-Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry" 0
-Set-RegistryValue "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection" "AllowTelemetry" 0
+$null = Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" "AllowTelemetry" 0
+$null = Set-RegistryValue "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection" "AllowTelemetry" 0
 Write-OK "Telemetry reduced to minimum"
 
 # Disable Customer Experience Improvement Program
-Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows" "CEIPEnable" 0
+$null = Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows" "CEIPEnable" 0
 Write-OK "CEIP disabled"
 
 # Disable error reporting to Microsoft
-Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" "Disabled" 1
+$null = Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" "Disabled" 1
 Write-OK "Windows Error Reporting disabled"
 
 # Disable inking and typing diagnostics
-Set-RegistryValue "HKCU:\Software\Microsoft\Input\TIPC" "Enabled" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Input\TIPC" "Enabled" 0
 Write-OK "Inking and typing diagnostics disabled"
 
 
@@ -167,21 +167,21 @@ Write-OK "Inking and typing diagnostics disabled"
 Write-Section "6. App Privacy"
 
 # Disable advertising ID
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" "Enabled" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" "Enabled" 0
 Write-OK "Advertising ID disabled"
 
 # Disable app launch tracking
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "Start_TrackProgs" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "Start_TrackProgs" 0
 Write-OK "App launch tracking in Start disabled"
 
 # Disable personalized suggestions
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "SubscribedContent-338389Enabled" 0
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "SubscribedContent-353694Enabled" 0
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "SubscribedContent-353696Enabled" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "SubscribedContent-338389Enabled" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "SubscribedContent-353694Enabled" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "SubscribedContent-353696Enabled" 0
 Write-OK "Personalized suggestions disabled"
 
 # Disable silent app installs (bloatware)
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "SilentInstalledAppsEnabled" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "SilentInstalledAppsEnabled" 0
 Write-OK "Silent app installs disabled"
 
 
@@ -191,29 +191,27 @@ Write-OK "Silent app installs disabled"
 Write-Section "7. Taskbar -- Clean Mode"
 
 # Move taskbar icons to the left
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "TaskbarAl" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "TaskbarAl" 0
 Write-OK "Taskbar aligned to the left"
 
 # Hide search button from taskbar
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "SearchboxTaskbarMode" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" "SearchboxTaskbarMode" 0
 Write-OK "Search button hidden from taskbar"
 
 # Hide Task View button
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "ShowTaskViewButton" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "ShowTaskViewButton" 0
 Write-OK "Task View button hidden"
 
 # Hide Widgets button
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "TaskbarDa" 0
-Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Dsh" "AllowNewsAndInterests" 0
+$null = Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Dsh" "AllowNewsAndInterests" 0
 Write-OK "Widgets hidden from taskbar"
 
 # Hide Chat (Teams) button
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "TaskbarMn" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "TaskbarMn" 0
 Write-OK "Chat/Teams button hidden"
 
 # Hide News and Interests
-Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" "EnableFeeds" 0
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Feeds" "ShellFeedsTaskbarViewMode" 2
+$null = Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" "EnableFeeds" 0
 Write-OK "News and Interests hidden"
 
 
@@ -222,15 +220,15 @@ Write-OK "News and Interests hidden"
 # ============================================================
 Write-Section "8. Explorer -- Clean View"
 
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "HideFileExt" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "HideFileExt" 0
 Write-OK "File extensions visible"
 
 # Open Explorer to "This PC" instead of Quick Access
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "LaunchTo" 1
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "LaunchTo" 1
 Write-OK "Explorer opens to 'This PC'"
 
 # Disable OneDrive sync ads in Explorer
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "ShowSyncProviderNotifications" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "ShowSyncProviderNotifications" 0
 Write-OK "OneDrive notifications in Explorer disabled"
 
 
@@ -240,12 +238,12 @@ Write-OK "OneDrive notifications in Explorer disabled"
 Write-Section "9. Start Menu -- Clean"
 
 # Disable recommended apps in Start
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "Start_IrisRecommendations" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" "Start_IrisRecommendations" 0
 Write-OK "Recommendations in Start Menu disabled"
 
 # Disable cloud content in Start
-Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" "DisableWindowsConsumerFeatures" 1
-Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" "DisableCloudOptimizedContent" 1
+$null = Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" "DisableWindowsConsumerFeatures" 1
+$null = Set-RegistryValue "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" "DisableCloudOptimizedContent" 1
 Write-OK "Cloud content in Start Menu disabled"
 
 
@@ -255,13 +253,13 @@ Write-OK "Cloud content in Start Menu disabled"
 Write-Section "10. Lock Screen"
 
 # Disable notifications on lock screen
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings" "NOC_GLOBAL_SETTING_ALLOW_TOASTS_ABOVE_LOCK" 0
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings" "NOC_GLOBAL_SETTING_ALLOW_CRITICAL_TOASTS_ABOVE_LOCK" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings" "NOC_GLOBAL_SETTING_ALLOW_TOASTS_ABOVE_LOCK" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings" "NOC_GLOBAL_SETTING_ALLOW_CRITICAL_TOASTS_ABOVE_LOCK" 0
 Write-OK "Notifications on lock screen disabled"
 
 # Disable Bing/Spotlight images on lock screen
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "RotatingLockScreenEnabled" 0
-Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "RotatingLockScreenOverlayEnabled" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "RotatingLockScreenEnabled" 0
+$null = Set-RegistryValue "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" "RotatingLockScreenOverlayEnabled" 0
 Write-OK "Bing/Spotlight images on lock screen disabled"
 
 
